@@ -1,0 +1,122 @@
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: sentinel
+  namespace: redis
+  labels:
+    environment: prod
+    tier: cache
+    app.kubernetes.io/name: sentinel
+    app.kubernetes.io/instance: sentinel
+    app.kubernetes.io/version: "7.2"
+    app.kubernetes.io/component: sentinel
+spec:
+  serviceName: sentinel-headless
+  replicas: 3
+
+  selector:
+    matchLabels:
+      environment: prod
+      tier: cache
+      app.kubernetes.io/name: sentinel
+      app.kubernetes.io/instance: sentinel
+      app.kubernetes.io/version: "7.2"
+      app.kubernetes.io/component: sentinel
+
+  template:
+    metadata:
+      labels:
+        environment: prod
+        tier: cache
+        app.kubernetes.io/name: sentinel
+        app.kubernetes.io/instance: sentinel
+        app.kubernetes.io/version: "7.2"
+        app.kubernetes.io/component: sentinel
+    spec:
+      serviceAccountName: sentinel
+      automountServiceAccountToken: false
+      securityContext:
+        fsGroup: 1001
+        fsGroupChangePolicy: "OnRootMismatch"
+      terminationGracePeriodSeconds: 30
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: DoNotSchedule
+          labelSelector:
+            matchLabels:
+              environment: prod
+              tier: cache
+              app.kubernetes.io/name: sentinel
+              app.kubernetes.io/instance: sentinel
+              app.kubernetes.io/version: "7.2"
+              app.kubernetes.io/component: sentinel
+      containers:
+        - name: sentinel
+          image: redis@sha256:595cc6f2bb3af6e03347b90deb6123c6aa2c81dea05ce08128de8a174b6ac67b #redis:7.4
+          imagePullPolicy: IfNotPresent
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1001
+            runAsGroup: 1001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - All
+            seccompProfile:
+              type: RuntimeDefault
+
+          env:
+            - name: SENTINEL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-sentinel-password
+                  key: password
+
+          command:
+            - sh
+            - -c
+            - |
+              cp /etc/sentinel/sentinel.conf /tmp/sentinel.conf
+              echo "sentinel auth-pass mymain ${SENTINEL_PASSWORD}" >> /tmp/sentinel.conf
+              redis-sentinel /tmp/sentinel.conf
+
+          ports:
+            - name: sentinel
+              containerPort: 26379
+
+          readinessProbe:
+            tcpSocket:
+              port: 26379
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          livenessProbe:
+            tcpSocket:
+              port: 26379
+            initialDelaySeconds: 20
+            periodSeconds: 10
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+
+          volumeMounts:
+            - name: config
+              mountPath: /etc/sentinel
+            - name: tmp
+              mountPath: /tmp
+
+      volumes:
+        - name: config
+          configMap:
+            name: sentinel-config
+        - name: tmp
+          emptyDir: {}

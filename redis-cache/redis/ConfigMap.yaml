@@ -1,0 +1,47 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: redis
+  labels:
+    environment: prod
+    tier: cache
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: redis
+    app.kubernetes.io/version: "7.2"
+    app.kubernetes.io/component: redis
+data:
+  redis.conf: |
+    protected-mode no
+
+    aclfile /etc/redis/users.acl
+
+    appendonly yes
+    appendfsync everysec
+
+    dir /data
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-acl-template
+  namespace: redis
+  labels:
+    environment: prod
+    tier: cache
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/instance: redis
+    app.kubernetes.io/version: "7.2"
+    app.kubernetes.io/component: redis
+data:
+  users.acl.tpl: |
+    user default off
+
+    user admin on >${ADMIN_PASSWORD} ~* &* +@all
+
+    user app on >${APP_PASSWORD} ~* &* +@read +@write +@connection +@pubsub -flushall -flushdb -config -shutdown
+
+    user replication on >${REPLICATION_PASSWORD} +psync +replconf +ping
+
+    user sentinel on >${SENTINEL_PASSWORD} +multi +slaveof +ping +exec +subscribe +publish +info +role +client|setname +client|kill +script|kill +config|rewrite
