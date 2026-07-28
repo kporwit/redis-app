@@ -41,6 +41,7 @@ respectively and the `source.repoURL` should contain the repository link to the 
 files will be pushed. With this setup ArgoCD should create two Applications with resources defined in respective
 directories.
 
+
 # Comments
 - Plain text passwords for secrets were removed, External Secrets Operator resources were created instead.
 - Network Policies were set up to block non-allowed ingress by default.
@@ -49,6 +50,7 @@ directories.
 - All workloads created in HA setting (3 replicas) with TopologySpreadConstrains.
 - `php-app` Deployment configuration allows the pods to reach Redis cluster in `redis` namespace.
 - egress on `php-app` is not restricted, thus it is possible to connect to the external DB.
+- feel free to contact me for more details :)
 
 # ToDo
 - Redis `redis-0` pod is always the master and the rest are replicas. This setup works well until there is a failover
@@ -57,6 +59,8 @@ directories.
 - Consider stakater/Reloader for Secrets,ConfigMap rotation.
 - Consider packing the manifests into reusable Helm Charts.
 - TopologySpreadConstrains for the workloads is set to `hostname`. Consider changing for appropriate Cloud Provider `zone` label.
+- Consider PHP application container creation thorugh Dockerfile with proper CI/CD to build/tag/push the image.
+    - Together with Helm Charts, this should create proper setup where Kubernetes resources and the Application are taged and easier to manage/deploy.
 
 # Versions
 Applications versions used for the infrastructure can be found below:
