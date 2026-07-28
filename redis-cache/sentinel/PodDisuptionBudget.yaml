@@ -1,0 +1,23 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: sentinel
+  namespace: redis
+  labels:
+    environment: prod
+    tier: cache
+    app.kubernetes.io/name: sentinel
+    app.kubernetes.io/instance: sentinel
+    app.kubernetes.io/version: "7.2"
+    app.kubernetes.io/component: sentinel
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      environment: prod
+      tier: cache
+      app.kubernetes.io/name: sentinel
+      app.kubernetes.io/instance: sentinel
+      app.kubernetes.io/version: "7.2"
+      app.kubernetes.io/component: sentinel
