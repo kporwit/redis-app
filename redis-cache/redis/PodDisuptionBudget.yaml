@@ -1,0 +1,16 @@
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis
+  namespace: redis
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      environment: prod
+      tier: cache
+      app.kubernetes.io/name: redis
+      app.kubernetes.io/instance: redis
+      app.kubernetes.io/version: "7.2"
+      app.kubernetes.io/component: redis
