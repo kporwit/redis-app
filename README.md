@@ -55,7 +55,7 @@ directories.
   and Sentinetl chooses new master from replicas. Init command should be modified in a way that Sentinel chooses 
   roles for the redis pods.
 - Consider stakater/Reloader for Secrets,ConfigMap rotation.
-- Consider packing the manifests into reusable Helm Chart.
+- Consider packing the manifests into reusable Helm Charts.
 - TopologySpreadConstrains for the workloads is set to `hostname`. Consider changing for appropriate Cloud Provider `zone` label.
 
 # Versions
